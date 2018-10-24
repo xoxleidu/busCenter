@@ -1,16 +1,18 @@
 <template>
 
   <div class="m-part">
-    <h3 class="title">拖拽选址 - DEMO</h3>
-    <mapDrag @drag="dragMap" class="mapbox"></mapDrag>
-    <ul class="info">
+    <!--<h3 class="title">{{ dragData.lng }} - {{ dragData.lat }}</h3>-->
+    <div class="mapbox" :style="height">
+      <mapDrag @drag="dragMap" class="mapboxli"></mapDrag>
+    </div>
+    <!--<ul class="info">
       <li><span>经度：</span>{{ dragData.lng }}</li>
       <li><span>纬度：</span>{{ dragData.lat }}</li>
       <li><span>地址：</span>{{ dragData.address }}</li>
       <li><span>最近的路口：</span>{{ dragData.nearestJunction }}</li>
       <li><span>最近的路：</span>{{ dragData.nearestRoad }}</li>
       <li><span>最近的POI：</span>{{ dragData.nearestPOI }}</li>
-    </ul>
+    </ul>-->
   </div>
 
 </template>
@@ -27,6 +29,11 @@ export default {
   },
   data () {
     return {
+      //fullHeight: document.documentElement.clientHeight,
+      height:{
+        height: document.documentElement.clientHeight -353 + 'px',
+      },
+
       dragData: {
         lng: null,
         lat: null,
@@ -37,17 +44,19 @@ export default {
       }
     }
   },
+
   methods: {
     dragMap (data) {
-      this.dragData = {
+      /*this.dragData = {
         lng: data.position.lng,
         lat: data.position.lat,
         address: data.address,
         nearestJunction: data.nearestJunction,
         nearestRoad: data.nearestRoad,
         nearestPOI: data.nearestPOI
-      }
-    }
+      }*/
+    },
+
   }
 }
 
@@ -56,7 +65,7 @@ export default {
 
 <style rel="stylesheet/scss" lang="scss" scoped>
 
-
+  html,body,#app {height: 100%;}
 
   .page-header{
     color: #fff; text-align: center; background: #159957;
@@ -72,9 +81,11 @@ export default {
   .m-part{ margin-bottom: 30px; }
   .m-part::after{ content: ''; display: block; clear: both; }
   .m-part .title{ font-size: 30px; line-height: 60px; margin-bottom: 10px; color: #333; }
-  .m-part .mapbox{ width: 600px; height: 400px; margin-bottom: 20px; float: left; }
-  .m-part .info{ margin: 0; padding: 0; list-style: none; line-height: 30px; margin-left: 620px; }
-  .m-part .info span{ display: block; color: #999; }
+  .m-part .mapbox{ width: 100%; height: 100%;margin-bottom: 20px;  }
+  .m-part .mapboxli{ width: 100%; height: 100%; margin: 0;}
+  .m-part .info{ margin: 0; padding: 0; list-style: none; line-height: 30px; margin: auto; }
+  .m-part .info li{ float: left }
+  .m-part .info span{ display: block; color: #999; float: left}
   .m-part ol{ line-height: 40px; margin-left: 0; padding-left: 0; }
   .m-part pre{ padding: 10px 20px; line-height: 30px; border-radius: 3px; box-shadow: 0 0 15px rgba(0,0,0,.5); }
   .m-footer{ background: #eee; line-height: 60px; text-align: center; color: #999; font-size: 12px; }
