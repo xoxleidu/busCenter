@@ -9,7 +9,7 @@
 <script>
 
 export default {
-  name: 'Dashboard',
+  name: 'Video',
   data () {
     return {
       msg: 'Welcome to Your BUS App'

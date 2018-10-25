@@ -1,13 +1,32 @@
 <template>
-
+  <div class="m-part">
+        <mapBusLine @drag="dragMap" class="mapboxli"></mapBusLine>
+  </div>
+  
 </template>
 
 <script>
-    export default {
-        name: "index"
+
+
+import mapBusLine from '../../components/Map/mapBusLine'
+
+export default {
+  name: 'Dashboard',
+  components: {
+    mapBusLine
+  },
+  data () {
+    return {
     }
+  },
+
+  methods: {
+  }
+}
+
+
 </script>
 
-<style scoped>
-
+<style lang="css">
+  .m-part{ margin-bottom: 30px; }
 </style>

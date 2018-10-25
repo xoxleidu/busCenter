@@ -30,10 +30,11 @@ export const constantRouterMap = [
     component: Layout,
     redirect: '/dashboard',
     name: 'Dashboard',
-    hidden: true,
+    
     children: [{
       path: 'dashboard',
-      component: () => import('@/views/dashboard/index')
+      component: () => import('@/views/dashboard/index'),
+      meta: {title: 'dashboard', icon: 'example'}
     }]
   }
 ]
@@ -41,13 +42,27 @@ export const constantRouterMap = [
 export const asyncRouterMap = [
   {
     path: '/map',
+
     component: Layout,
     children: [
       {
         path: 'index',
         name: 'Map',
-        component: () => import('@/views/map/index'),
-        meta: {title: 'Form', icon: 'form'}
+        component: () => import('@/views/map/index?t=' + 1),
+        meta: {title: 'Map', icon: 'map'},
+        
+      }
+    ]
+  },
+  {
+    path: '/video',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Video',
+        component: () => import('@/views/video/index'),
+        meta: {title: 'Video', icon: 'video'}
       }
     ]
   },
