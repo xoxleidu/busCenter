@@ -1,14 +1,14 @@
 <template>
     <el-container>
       <el-header>
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <div class="grid-content">
-              <span class="searchBanner">按路线查询公交</span>
-              <span><el-input v-model="busLineName" placeholder="请输入内容" @keyup.enter.native="busLineSearch"></el-input></span>
-              <span><el-button type="primary" @click="busLineSearch">主要按钮</el-button></span>
-              <span class="clearBoth"></span>
-            </div>
+        <el-row>
+          <el-col :span="2" class="line">按路线查询公交</el-col>
+          <el-col :span="2">
+            <el-input v-model="busLineName" placeholder="请输入内容" @keyup.enter.native="busLineSearch"></el-input>
+          </el-col>
+          <el-col :span="2">
+            <el-button type="primary" @click="busLineSearch">主要按钮</el-button>
+            <img src="../../assets/logo.png"  alt="上海鲜花港 - 郁金香" />
           </el-col>
         </el-row>
       </el-header>
@@ -35,11 +35,15 @@
       busLineSearch: function (event) {
         this.initMap(this.busLineName)
       },
+
+
       // 实例化地图
       initMap (data) {
         // 加载PositionPicker，loadUI的路径参数为模块名中 'ui/' 之后的部分
         let AMapUI = this.AMapUI = window.AMapUI
         let AMap = this.AMap = window.AMap
+        //let PathSimplifier = this.PathSimplifier = window.PathSimplifier
+
 
         let map = new AMap.Map('js-container', {
             resizeEnable: true,
@@ -49,11 +53,236 @@
             cityName: '廊坊',
           });
 
+        data = 1;//测试
+
         if(!data) { return false }
 
         let linesearch;
 
-        AMap.plugin(["AMap.LineSearch"], function() {
+
+
+
+
+        AMapUI.load(['ui/misc/PathSimplifier', 'lib/$'], function(PathSimplifier, $) {
+
+          if (!PathSimplifier.supportCanvas) {
+            alert('当前环境不支持 Canvas！');
+            return;
+          }
+
+          //线条颜色
+          let colors = [
+            "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
+            "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707",
+            "#651067", "#329262", "#5574a6", "#3b3eac"
+          ];
+
+          let pathSimplifierIns = new PathSimplifier({
+            zIndex: 100,
+            //autoSetFitView:false,
+            map: map, //所属的地图实例
+
+            getPath: function(pathData, pathIndex) {
+
+              return pathData.path;
+            },
+            getHoverTitle: function(pathData, pathIndex, pointIndex) {
+              //返回鼠标悬停时显示的信息
+              if (pointIndex >= 0) {
+                //鼠标悬停在某个轨迹节点上
+                return pathData.name + '，点：' + pointIndex + '/' + pathData.path.length;
+              }
+              //鼠标悬停在节点之间的连线上
+              return pathData.name + '，点数量' + pathData.path.length;
+            },
+            //样式
+            renderOptions: {
+              //轨迹线的样式
+              pathLineStyle: {
+                dirArrowStyle: true
+              },
+              getPathStyle: function(pathItem, zoom) {
+
+                var color = colors[pathItem.pathIndex % colors.length],
+                  lineWidth = Math.round(4 * Math.pow(1.1, zoom - 3));
+
+                return {
+                  pathLineStyle: {
+                    strokeStyle: color,
+                    lineWidth: lineWidth
+                  },
+                  pathLineSelectedStyle: {
+                    lineWidth: lineWidth + 2
+                  },
+                  pathNavigatorStyle: {
+                    fillStyle: color
+                  }
+                };
+              }
+            }
+          });
+
+          window.pathSimplifierIns = pathSimplifierIns;
+
+          $('<div id="loadingTip">加载数据，请稍候...</div>').appendTo(document.body);
+
+          /*setTimeout(function(){
+
+          },5000);*/
+
+
+
+          $.getJSON('https://a.amap.com/amap-ui/static/data/big-routes.json', function(d) {
+
+            $('#loadingTip').remove();
+
+            //let thisdata = [];
+
+            AMap.plugin(["AMap.LineSearch"],  LineSearch => {
+              //alert('路'+data)
+              //let busLineName = data.toString();
+              let busLineName = '17';
+              if(!busLineName) return;
+              //实例化公交线路查询类，只取回一条路线
+              if(!linesearch){
+                linesearch = new AMap.LineSearch({
+                  pageIndex: 1,
+                  city: '廊坊',
+                  pageSize: 1,
+                  extensions: 'all'
+                });
+              }
+              //搜索相关公交线路
+              linesearch.search(busLineName, function(status, result) {
+                map.clearMap()
+                if (status === 'complete' && result.info === 'OK') {
+                  //thisdata = result.lineInfo
+                  //console.log(thisdata);
+                  //lineSearch_Callback(result);
+                  //debugger//自己自己我
+                  console.log(thisdata)
+                  //return result.lineInfo;
+
+                } else {
+                  alert(JSON.stringify(result));
+                }
+              });
+
+            })
+            console.log(thisdata())
+
+            var flyRoutes = [];
+
+            for (var i = 0, len = d.length; i < len; i++) {
+
+              if (d[i].name.indexOf('乌鲁木齐') >= 0) {
+
+                d.splice(i, 0, {
+                  name: '飞行 - ' + d[i].name,
+                  path: PathSimplifier.getGeodesicPath(
+                    d[i].path[0], d[i].path[d[i].path.length - 1], 100)
+                });
+
+                i++;
+                len++;
+              }
+            }
+
+            d.push.apply(d, flyRoutes);
+
+
+
+            pathSimplifierIns.setData(d);
+
+            //initRoutesContainer(d);
+
+            function onload() {
+              pathSimplifierIns.renderLater();
+            }
+
+            function onerror(e) {
+              alert('图片加载失败！');
+            }
+
+            //创建一个巡航器
+            var navg0 = pathSimplifierIns.createPathNavigator(0, {
+              loop: true, //循环播放
+              speed: 500000
+            });
+
+            navg0.start();
+
+
+            var navg1 = pathSimplifierIns.createPathNavigator(3, {
+              loop: true,
+              speed: 1000000,
+              pathNavigatorStyle: {
+                width: 24,
+                height: 24,
+                //使用图片
+                content: PathSimplifier.Render.Canvas.getImageContent('static/img/car.png', onload, onerror),
+                strokeStyle: null,
+                fillStyle: null,
+                //经过路径的样式
+                pathLinePassedStyle: {
+                  lineWidth: 6,
+                  strokeStyle: 'black',
+                  dirArrowStyle: {
+                    stepSpace: 15,
+                    strokeStyle: 'red'
+                  }
+                }
+              }
+            });
+
+            navg1.start();
+
+            var navg2 = pathSimplifierIns.createPathNavigator(7, {
+              loop: true,
+              speed: 500000,
+              pathNavigatorStyle: {
+                width: 16,
+                height: 32,
+                content: PathSimplifier.Render.Canvas.getImageContent('static/img/car.png', onload, onerror),
+                strokeStyle: null,
+                fillStyle: null
+              }
+            });
+
+            navg2.start();
+
+            var navg3 = pathSimplifierIns.createPathNavigator(5, {
+              loop: true,
+              speed: 500000,
+              pathNavigatorStyle: {
+                autoRotate: false, //禁止调整方向
+                pathLinePassedStyle: null,
+                width: 24,
+                height: 24,
+                content: PathSimplifier.Render.Canvas.getImageContent('static/img/car.png', onload, onerror),
+                strokeStyle: null,
+                fillStyle: null
+              }
+            });
+
+            navg3.start();
+          });
+        });
+
+
+
+        function pushData(PathSimplifier,d) {
+
+
+
+
+
+
+        }
+
+
+
+        /*AMap.plugin(["AMap.LineSearch"], function() {
           //alert('路'+data)
           let busLineName = data.toString();
           //let busLineName = '17';
@@ -71,15 +300,20 @@
           linesearch.search(busLineName, function(status, result) {
             map.clearMap()
             if (status === 'complete' && result.info === 'OK') {
-              lineSearch_Callback(result);
+              //console.log(result);
+              //lineSearch_Callback(result);
+
+
+
+
             } else {
               alert(JSON.stringify(result));
             }
           });
 
-        })
+        })*/
 
-        /*公交路线查询服务返回数据解析概况*/
+        公交路线查询服务返回数据解析概况
         function lineSearch_Callback(data) {
           let lineArr = data.lineInfo;
           let lineNum = data.lineInfo.length;
@@ -123,6 +357,9 @@
           });
           map.setFitView();
         }
+
+
+
       }
     },
     async created () {
@@ -143,6 +380,9 @@
   #js-container {
     height: 100%;
   }
+  .line {
+    font-weight: bold;
+  }
   .clearBoth {
     clear: both;
   }
@@ -150,7 +390,7 @@
     background-color: #E9EEF3;
     color: #333;
     text-align: center;
-    height: 740px;
+    height: 600px;
   }
   .grid-content {
     border-radius: 4px;
@@ -176,42 +416,5 @@
     color: #333;
     text-align: center;
     line-height: 200px;
-  }
-
-  body > .el-container {
-    margin-bottom: 40px;
-  }
-
-  .el-container:nth-child(5) .el-aside,
-  .el-container:nth-child(6) .el-aside {
-    line-height: 260px;
-  }
-
-  .el-container:nth-child(7) .el-aside {
-    line-height: 320px;
-  }
-
-  .el-row {
-    margin-bottom: 20px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  .el-col {
-    border-radius: 4px;
-  }
-  .bg-purple-dark {
-    background: #99a9bf;
-  }
-  .bg-purple {
-    background: #d3dce6;
-  }
-  .bg-purple-light {
-    background: #e5e9f2;
-  }
-  
-  .row-bg {
-    padding: 10px 0;
-    background-color: #f9fafc;
   }
 </style>
